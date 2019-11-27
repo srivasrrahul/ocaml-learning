@@ -59,7 +59,7 @@ let search f n =
     in
     search_internal 0 n
 
-let test_f x =
+(* let test_f x =
   if x < 0 then
     -100
   else
@@ -68,6 +68,28 @@ let test_f x =
 
 let test_val = search test_f 1000;;
 
-Printf.printf "%d" test_val
+Printf.printf "%d" test_val *)
+
+
+let empty = 
+   fun k -> 0;;
+
+let add dict key v = 
+   fun k -> 
+     if (k = key) then
+       v
+     else
+       (dict k);;
+
+let search_dict dict key = dict key;;
+
+
+(* let d1 = empty;; *)
+let d2 = add empty "x" 1;;
+let d3 = add d2 "y" 2;;
+let d4 = add d3 "z" 3;;
+let d5 = add d4 "w" 4;;
+
+Printf.printf "%d\n" (search_dict d5 "y");;
          
    
