@@ -127,4 +127,126 @@ Nil -> raise (Invalid_argument "Bad logic")
                 | Nil,Nil -> f x;;
                   
 
-visit (Printf.printf "%d\n") t
+(* visit (Printf.printf "%d\n") t;; *)
+
+let memo f =
+ let table = ref [] in
+ let rec find_or_apply entries x = 
+ match entries with
+ (x1,y1)::_ when x = x1 -> y1
+ | _ :: pending_entries -> find_or_apply pending_entries x
+ | [] ->
+     let y = f x in
+     table := (x,y)::!table;
+     y
+ in
+ (fun x -> find_or_apply !table x);;
+
+let rec fib = function
+0 | 1 -> 1
+| i -> fib (i-1) + fib (i-2);;
+
+let fib_mem = memo fib;;
+
+(* Printf.printf "%d\n" (fib_mem 40);; *)
+
+type 'a lazyValue = Lazy of 'a ref | Computed of 'a;;
+(* type 'a deferred = 'a Lazily ;; *)
+
+type 'a deferred = Deferred of 'a lazyValue ref;;
+
+let defer f =  Deferred(ref (Lazy f));;
+              
+
+let force deferred_val = match deferred_val with
+Deferred(pointer) -> 
+   match !pointer with
+      Lazy(function_pointer) -> let y = !function_pointer in
+                                pointer := Computed(y);
+                                y
+      | Computed(y) -> y;;
+
+            
+
+type 'a lazy_list = Nil
+| Cons of 'a * 'a lazy_list
+| LazyCons of 'a * 'a lazy_list deferred;;
+
+
+let nil = Nil;;
+
+let cons x = function
+Nil -> Cons(x,Nil)
+| Cons(y,ly) as curr -> Cons(x,curr)
+| LazyCons(y,ly) as curr -> Cons(x,curr);;
+
+let lazy_nil = (ref Nil);;
+
+
+(* LazyCons(x,Deferred (ref (Lazy (ref Nil))));; *)
+
+
+
+let lazy_cons x llist = function () ->
+   let y = llist () in
+   match y with
+      Nil -> LazyCons(x,defer (ref Nil))
+      | Cons(z,zs) as curr -> let pending_lazy_lst = defer (ref curr) in
+                              LazyCons(x,pending_lazy_lst)
+      | LazyCons(z,zs) as cur -> let pending_lazy_lst = defer (ref cur) in
+                                 LazyCons(x,pending_lazy_lst);;
+
+
+let is_nil llst = 
+let y = llst in
+match y with 
+Nil -> true
+| LazyCons(x,p) -> match p with
+    Deferred(pointer) -> match !pointer with
+      Lazy(nil_pointer) -> match !nil_pointer with
+        Nil -> true
+        | _ -> false
+      | _ -> false
+    | _ -> false
+| _ -> false;;
+
+
+let head llst = match llst with
+Nil -> Nil
+| Cons(x,_) -> x
+| LazyCons(x,_) -> x;;
+
+let tail llst = match llst with
+Nil -> Nil
+| Cons(_,xs) -> xs
+| LazyCons(_,ys) -> force ys;;
+
+
+(* let rec merge l1 l2 = fun () ->
+  match l1,l2 with
+  Nil,Nil -> Nil
+  | LazyCons(_,xs),LazyCons(y,ys) as ylist ->
+    let pending_lazy_list1 = defer (ref xs) in
+    let pending_lazy_list2 = defer (ref ylist) in
+    let merged_lazy_lst = merge (force xs) (force ylist) in
+    merged_lazy_lst;;
+
+
+let (@@) l1 l2 = match l1 l2 with
+Nil,Nil -> Nil
+| Cons(x,xs),Cons(y,ys) as ylist -> 
+   let pending_lazy_list1 = defer (ref xs) in
+   let pending_lazy_list2 = defer (ref ylist) in
+   let merged_lazy_lst = merge pending_lazy_list1 pending_lazy_list2 in
+   merged_lazy_lst;;
+        *)
+                    
+        
+
+        
+      
+             
+
+
+
+
