@@ -222,6 +222,12 @@ Nil -> Nil
 | LazyCons(_,ys) -> force ys;;
 
 
+let merge l1 l2 = let merge_local in
+match l1,l2 with
+LazyCons(x,xs) as a,_ -> (defer (ref a))
+| Nil,LazyCons(y,ys) as b -> (defer (ref b))
+merge_local;;
+
 (* let rec merge l1 l2 = fun () ->
   match l1,l2 with
   Nil,Nil -> Nil
